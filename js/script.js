@@ -286,17 +286,34 @@ function renderPracticeQuestion(){
 }
 
 /* ---------- SIMULADO (motor compartilhado: completo e selecionado) ---------- */
-const QUESTIONS_PER_TOPIC = 2;
+const EXAM_TOTAL_QUESTIONS = 30;   // simulado completo: todos os 15 temas, 2 de cada
+const CUSTOM_TOTAL_QUESTIONS = 10; // simulado selecionado: 10 fixas, distribuídas entre os temas escolhidos
 function shuffle(arr){
   const a = [...arr];
   for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   return a;
 }
-function buildQuizFromTopics(topicKeys){
-  const picked = topicKeys.flatMap(t=>{
-    const pool = shuffle(QUESTIONS.map((q,i)=>({...q,gid:i})).filter(q=>q.topic===t));
-    return pool.slice(0, QUESTIONS_PER_TOPIC);
-  });
+// Distribui `total` questões entre os temas em `topicKeys` o mais igualmente possível,
+// entregando uma questão por vez a cada tema em rodadas (round-robin) até bater o total
+// ou os temas selecionados esgotarem suas questões disponíveis.
+function dealQuestions(topicKeys, total){
+  const pools = {};
+  topicKeys.forEach(t=>{ pools[t] = shuffle(QUESTIONS.map((q,i)=>({...q,gid:i})).filter(q=>q.topic===t)); });
+  const dealOrder = shuffle([...topicKeys]);
+  const taken = {}; topicKeys.forEach(t=>taken[t]=0);
+  const picked = [];
+  while(picked.length < total){
+    let addedThisRound = false;
+    for(const t of dealOrder){
+      if(picked.length >= total) break;
+      if(taken[t] < pools[t].length){
+        picked.push(pools[t][taken[t]]);
+        taken[t]++;
+        addedThisRound = true;
+      }
+    }
+    if(!addedThisRound) break;
+  }
   return shuffle(picked);
 }
 function renderQuizQuestion(state, prefix){
@@ -461,7 +478,7 @@ function finishQuiz(state, prefix, onRetry){
 
 /* ---------- SIMULADO COMPLETO ---------- */
 document.getElementById('start-exam').addEventListener('click', ()=>{
-  Object.assign(examState, { order: buildQuizFromTopics(Object.keys(TOPICS)), idx:0, answers:{} });
+  Object.assign(examState, { order: dealQuestions(Object.keys(TOPICS), EXAM_TOTAL_QUESTIONS), idx:0, answers:{} });
   document.getElementById('exam-intro').style.display='none';
   document.getElementById('exam-quiz-area').style.display='block';
   document.getElementById('exam-result').style.display='none';
@@ -495,14 +512,16 @@ function renderCustomPicker(){
 }
 function updateStartCustomButton(){
   const btn = document.getElementById('start-custom');
-  const n = customSelectedTopics.size;
-  btn.disabled = n === 0;
-  btn.textContent = n
-    ? `Começar simulado selecionado (${n * QUESTIONS_PER_TOPIC} questões)`
+  const topics = [...customSelectedTopics];
+  const available = topics.reduce((sum,t)=> sum + QUESTIONS.filter(q=>q.topic===t).length, 0);
+  const willHave = Math.min(CUSTOM_TOTAL_QUESTIONS, available);
+  btn.disabled = topics.length === 0;
+  btn.textContent = topics.length
+    ? `Começar simulado selecionado (${willHave} questões)`
     : 'Selecione ao menos um tema';
 }
 document.getElementById('start-custom').addEventListener('click', ()=>{
-  Object.assign(customState, { order: buildQuizFromTopics([...customSelectedTopics]), idx:0, answers:{} });
+  Object.assign(customState, { order: dealQuestions([...customSelectedTopics], CUSTOM_TOTAL_QUESTIONS), idx:0, answers:{} });
   document.getElementById('custom-picker-area').style.display='none';
   document.getElementById('custom-quiz-area').style.display='block';
   document.getElementById('custom-result').style.display='none';
