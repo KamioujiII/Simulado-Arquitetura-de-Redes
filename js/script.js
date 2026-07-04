@@ -137,6 +137,8 @@ const QUESTIONS = [
 /* ---------- ESTADO ---------- */
 let practiceState = { topic:null, idx:0, order:[] };
 let examState = { order:[], idx:0, answers:{} };
+let customState = { order:[], idx:0, answers:{} };
+let customSelectedTopics = new Set();
 
 function loadStats(){
   try{ return JSON.parse(localStorage.getItem('simulado_stats')||'{}'); }catch(e){ return {}; }
@@ -283,76 +285,70 @@ function renderPracticeQuestion(){
   });
 }
 
-/* ---------- SIMULADO COMPLETO ---------- */
+/* ---------- SIMULADO (motor compartilhado: completo e selecionado) ---------- */
 const QUESTIONS_PER_TOPIC = 2;
 function shuffle(arr){
   const a = [...arr];
   for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   return a;
 }
-function buildExam(){
-  const picked = Object.keys(TOPICS).flatMap(t=>{
+function buildQuizFromTopics(topicKeys){
+  const picked = topicKeys.flatMap(t=>{
     const pool = shuffle(QUESTIONS.map((q,i)=>({...q,gid:i})).filter(q=>q.topic===t));
     return pool.slice(0, QUESTIONS_PER_TOPIC);
   });
   return shuffle(picked);
 }
-document.getElementById('start-exam').addEventListener('click', ()=>{
-  examState = { order: buildExam(), idx:0, answers:{} };
-  document.getElementById('exam-intro').style.display='none';
-  document.getElementById('exam-quiz-area').style.display='block';
-  document.getElementById('exam-result').style.display='none';
-  renderExamQuestion();
-});
-function renderExamQuestion(){
-  const q = examState.order[examState.idx];
-  const holder = document.getElementById('exam-question-holder');
-  document.getElementById('exam-progress').style.width = Math.round(((examState.idx+1)/examState.order.length)*100)+'%';
-  const selected = examState.answers[examState.idx];
+function renderQuizQuestion(state, prefix){
+  const q = state.order[state.idx];
+  const holder = document.getElementById(`${prefix}-question-holder`);
+  document.getElementById(`${prefix}-progress`).style.width = Math.round(((state.idx+1)/state.order.length)*100)+'%';
+  const selected = state.answers[state.idx];
   holder.innerHTML = `
     <div class="quiz-card">
-      <span class="qtag">questão ${examState.idx+1} de ${examState.order.length}</span>
+      <span class="qtag">questão ${state.idx+1} de ${state.order.length}</span>
       <div class="qtext">${q.q}</div>
-      <div id="exam-opts-holder"></div>
+      <div id="${prefix}-opts-holder"></div>
     </div>
   `;
-  const optsHolder = holder.querySelector('#exam-opts-holder');
+  const optsHolder = holder.querySelector(`#${prefix}-opts-holder`);
   q.opts.forEach((opt,i)=>{
     const b = document.createElement('button');
     b.className='opt' + (selected===i? ' selected':'');
     b.textContent = opt;
     b.addEventListener('click', ()=>{
-      examState.answers[examState.idx] = i;
+      state.answers[state.idx] = i;
       optsHolder.querySelectorAll('.opt').forEach(o=>o.classList.remove('selected'));
       b.classList.add('selected');
     });
     optsHolder.appendChild(b);
   });
-  document.getElementById('exam-prev').disabled = examState.idx===0;
-  document.getElementById('exam-next').textContent = examState.idx===examState.order.length-1 ? 'Finalizar simulado' : 'Próxima →';
+  document.getElementById(`${prefix}-prev`).disabled = state.idx===0;
+  document.getElementById(`${prefix}-next`).textContent = state.idx===state.order.length-1 ? 'Finalizar simulado' : 'Próxima →';
 }
-document.getElementById('exam-prev').addEventListener('click', ()=>{
-  if(examState.idx>0){ examState.idx--; renderExamQuestion(); }
-});
-document.getElementById('exam-next').addEventListener('click', ()=>{
-  if(examState.idx < examState.order.length-1){
-    examState.idx++;
-    renderExamQuestion();
-  } else {
-    finishExam();
-  }
-});
-function finishExam(){
-  document.getElementById('exam-quiz-area').style.display='none';
-  const total = examState.order.length;
+function initQuizNav(state, prefix, onFinish){
+  document.getElementById(`${prefix}-prev`).addEventListener('click', ()=>{
+    if(state.idx>0){ state.idx--; renderQuizQuestion(state, prefix); }
+  });
+  document.getElementById(`${prefix}-next`).addEventListener('click', ()=>{
+    if(state.idx < state.order.length-1){
+      state.idx++;
+      renderQuizQuestion(state, prefix);
+    } else {
+      onFinish();
+    }
+  });
+}
+function finishQuiz(state, prefix, onRetry){
+  document.getElementById(`${prefix}-quiz-area`).style.display='none';
+  const total = state.order.length;
   let correctCount = 0;
   const byTopic = {};
   const reviewList = [];
-  examState.order.forEach((q,i)=>{
-    Object.keys(TOPICS).includes(q.topic) || (byTopic[q.topic]=byTopic[q.topic]||{c:0,t:0});
+  state.order.forEach((q,i)=>{
     if(!byTopic[q.topic]) byTopic[q.topic] = {c:0,t:0};
     byTopic[q.topic].t++;
-    const ans = examState.answers[i];
+    const ans = state.answers[i];
     const isCorrect = ans===q.correct;
     if(isCorrect){ correctCount++; byTopic[q.topic].c++; }
     reviewList.push({q, ans, isCorrect});
@@ -378,7 +374,7 @@ function finishExam(){
   stats.weakestTopic = weakestTopic;
   saveStats(stats);
 
-  const resultBox = document.getElementById('exam-result');
+  const resultBox = document.getElementById(`${prefix}-result`);
   resultBox.style.display='block';
 
   const breakdownHTML = Object.keys(byTopic).sort((a,b)=> (byTopic[a].c/byTopic[a].t)-(byTopic[b].c/byTopic[b].t)).map(t=>{
@@ -442,17 +438,17 @@ function finishExam(){
     ${reviewHTML}
 
     <div class="center-actions">
-      <button class="primary" id="retry-exam">Refazer simulado</button>
-      <button class="ghost" id="go-practice-weak">Praticar tema mais fraco</button>
+      <button class="primary" id="retry-${prefix}">Refazer simulado</button>
+      <button class="ghost" id="go-practice-weak-${prefix}">Praticar tema mais fraco</button>
     </div>
   `;
-  document.getElementById('retry-exam').addEventListener('click', ()=>{
-    document.getElementById('exam-intro').style.display='block';
+  document.getElementById(`retry-${prefix}`).addEventListener('click', ()=>{
     resultBox.style.display='none';
+    onRetry();
     renderHome();
   });
   if(weakestTopic){
-    document.getElementById('go-practice-weak').addEventListener('click', ()=>{
+    document.getElementById(`go-practice-weak-${prefix}`).addEventListener('click', ()=>{
       document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
       document.querySelector('[data-view="practice"]').classList.add('active');
       document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -463,7 +459,62 @@ function finishExam(){
   renderHome();
 }
 
+/* ---------- SIMULADO COMPLETO ---------- */
+document.getElementById('start-exam').addEventListener('click', ()=>{
+  Object.assign(examState, { order: buildQuizFromTopics(Object.keys(TOPICS)), idx:0, answers:{} });
+  document.getElementById('exam-intro').style.display='none';
+  document.getElementById('exam-quiz-area').style.display='block';
+  document.getElementById('exam-result').style.display='none';
+  renderQuizQuestion(examState, 'exam');
+});
+initQuizNav(examState, 'exam', ()=> finishQuiz(examState, 'exam', ()=>{
+  document.getElementById('exam-intro').style.display='block';
+}));
+
+/* ---------- SIMULADO SELECIONADO ---------- */
+function renderCustomPicker(){
+  const box = document.getElementById('custom-topic-picker');
+  box.innerHTML = Object.keys(TOPICS).map(key=>{
+    const n = QUESTIONS.filter(q=>q.topic===key).length;
+    const sel = customSelectedTopics.has(key);
+    return `<div class="card${sel?' selected':''}" data-topic="${key}">
+      <h3>${TOPICS[key].label}</h3>
+      <p>${n} questão(ões) disponível(is)</p>
+      <span class="badge">${sel? 'selecionado ✓':'selecionar'}</span>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('.card').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      const t = c.dataset.topic;
+      if(customSelectedTopics.has(t)) customSelectedTopics.delete(t);
+      else customSelectedTopics.add(t);
+      renderCustomPicker();
+      updateStartCustomButton();
+    });
+  });
+}
+function updateStartCustomButton(){
+  const btn = document.getElementById('start-custom');
+  const n = customSelectedTopics.size;
+  btn.disabled = n === 0;
+  btn.textContent = n
+    ? `Começar simulado selecionado (${n * QUESTIONS_PER_TOPIC} questões)`
+    : 'Selecione ao menos um tema';
+}
+document.getElementById('start-custom').addEventListener('click', ()=>{
+  Object.assign(customState, { order: buildQuizFromTopics([...customSelectedTopics]), idx:0, answers:{} });
+  document.getElementById('custom-picker-area').style.display='none';
+  document.getElementById('custom-quiz-area').style.display='block';
+  document.getElementById('custom-result').style.display='none';
+  renderQuizQuestion(customState, 'custom');
+});
+initQuizNav(customState, 'custom', ()=> finishQuiz(customState, 'custom', ()=>{
+  document.getElementById('custom-picker-area').style.display='block';
+}));
+
 /* ---------- INIT ---------- */
 renderHome();
 renderVideos();
 renderPracticePicker();
+renderCustomPicker();
+updateStartCustomButton();

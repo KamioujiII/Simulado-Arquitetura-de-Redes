@@ -24,6 +24,7 @@
     <button class="tab-btn" data-view="videos">Videoaulas</button>
     <button class="tab-btn" data-view="practice">Praticar por tema</button>
     <button class="tab-btn" data-view="exam">Simulado completo</button>
+    <button class="tab-btn" data-view="custom">Simulado selecionado</button>
   </nav>
 
   <section id="view-home" class="view active">
@@ -68,6 +69,28 @@
       </div>
     </div>
     <div id="exam-result" style="display:none"></div>
+  </section>
+
+  <section id="view-custom" class="view">
+    <div id="custom-picker-area">
+      <div class="hero">
+        <h2>Simulado selecionado</h2>
+        <p>Escolha os temas que você quer estudar. As questões são divididas de forma equilibrada (mesma quantidade por tema) entre os temas escolhidos.</p>
+      </div>
+      <div id="custom-topic-picker" class="grid"></div>
+      <div class="center-actions" style="margin-top:4px; text-align:left">
+        <button class="primary" id="start-custom" disabled>Selecione ao menos um tema</button>
+      </div>
+    </div>
+    <div id="custom-quiz-area" style="display:none">
+      <div class="progress-bar"><div class="fill" id="custom-progress"></div></div>
+      <div id="custom-question-holder"></div>
+      <div class="center-actions">
+        <button class="ghost" id="custom-prev">&larr; Anterior</button>
+        <button class="primary" id="custom-next">Próxima &rarr;</button>
+      </div>
+    </div>
+    <div id="custom-result" style="display:none"></div>
   </section>
 
   <footer>plano de estudos &middot; feito para a prova de 07/07/2026</footer>
