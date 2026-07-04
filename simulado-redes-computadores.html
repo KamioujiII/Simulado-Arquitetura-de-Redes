@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulado · Redes de Computadores</title>
+<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <span class="dot"></span>
+      <div>
+        <h1>Simulado de Redes</h1>
+        <small>hamming · crc · osi · dispositivos · ethernet · cabeamento · wireless</small>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-view="home">Início</button>
+    <button class="tab-btn" data-view="videos">Videoaulas</button>
+    <button class="tab-btn" data-view="practice">Praticar por tema</button>
+    <button class="tab-btn" data-view="exam">Simulado completo</button>
+  </nav>
+
+  <section id="view-home" class="view active">
+    <div class="hero">
+      <h2>Pronto para a prova de 07/07?</h2>
+      <p>Assista às videoaulas por tema, pratique com feedback imediato ou faça o simulado completo cronometrado como se fosse o dia da prova. No fim do simulado você vê exatamente o que acertou, o que errou e em qual tema precisa reforçar.</p>
+      <span class="stamp" id="last-score-stamp">Nenhum simulado feito ainda</span>
+    </div>
+
+    <div class="stat-row" id="home-stats"></div>
+
+    <div class="grid" id="home-topics"></div>
+  </section>
+
+  <section id="view-videos" class="view">
+    <div id="videos-container"></div>
+  </section>
+
+  <section id="view-practice" class="view">
+    <div id="practice-topic-picker" class="grid"></div>
+    <div id="practice-quiz-area" style="display:none">
+      <button class="ghost" id="practice-back" style="margin-bottom:16px">&larr; Voltar aos temas</button>
+      <div class="progress-bar"><div class="fill" id="practice-progress"></div></div>
+      <div id="practice-question-holder"></div>
+    </div>
+  </section>
+
+  <section id="view-exam" class="view">
+    <div id="exam-intro" class="hero">
+      <h2>Simulado completo</h2>
+      <p>Todas as questões, em ordem embaralhada, sem mostrar a resposta até o fim &mdash; igual à prova de verdade. Ao terminar, você recebe a nota, a lista de acertos e erros, e a análise de quais temas mais precisam de reforço.</p>
+      <div class="center-actions" style="margin-top:18px; text-align:left">
+        <button class="primary" id="start-exam">Começar simulado</button>
+      </div>
+    </div>
+    <div id="exam-quiz-area" style="display:none">
+      <div class="progress-bar"><div class="fill" id="exam-progress"></div></div>
+      <div id="exam-question-holder"></div>
+      <div class="center-actions">
+        <button class="ghost" id="exam-prev">&larr; Anterior</button>
+        <button class="primary" id="exam-next">Próxima &rarr;</button>
+      </div>
+    </div>
+    <div id="exam-result" style="display:none"></div>
+  </section>
+
+  <footer>plano de estudos &middot; feito para a prova de 07/07/2026</footer>
+</div>
+
+<script src="./js/script.js"></script>
+</body>
+</html>
