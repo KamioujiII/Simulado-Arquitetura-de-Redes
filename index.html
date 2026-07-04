@@ -25,6 +25,7 @@
     <button class="tab-btn" data-view="practice">Praticar por tema</button>
     <button class="tab-btn" data-view="exam">Simulado completo</button>
     <button class="tab-btn" data-view="custom">Simulado selecionado</button>
+    <button class="tab-btn" data-view="calc">Cálculos</button>
   </nav>
 
   <section id="view-home" class="view active">
@@ -91,6 +92,25 @@
       </div>
     </div>
     <div id="custom-result" style="display:none"></div>
+  </section>
+
+  <section id="view-calc" class="view">
+    <div id="calc-intro" class="hero">
+      <h2>Cálculos</h2>
+      <p>Só questões que envolvem contas: tempo de propagação e RTT, tempo de transmissão, código CRC, código de Hamming, bit de paridade e frequência/velocidade de onda. Baseadas nas aulas e nos exercícios do professor.</p>
+      <div class="center-actions" style="margin-top:18px; text-align:left">
+        <button class="primary" id="start-calc">Começar</button>
+      </div>
+    </div>
+    <div id="calc-quiz-area" style="display:none">
+      <div class="progress-bar"><div class="fill" id="calc-progress"></div></div>
+      <div id="calc-question-holder"></div>
+      <div class="center-actions">
+        <button class="ghost" id="calc-prev">&larr; Anterior</button>
+        <button class="primary" id="calc-next">Próxima &rarr;</button>
+      </div>
+    </div>
+    <div id="calc-result" style="display:none"></div>
   </section>
 
   <footer>plano de estudos &middot; feito para a prova de 07/07/2026</footer>
