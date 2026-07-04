@@ -5,7 +5,6 @@ Simulado interativo para estudo da disciplina de Arquitetura de Redes I (UNESC),
 ## Estrutura do repositório
 
 ```
-AN-1/
 ├── Simulado/
 │   ├── simulado-redes-computadores.html   # página principal
 │   ├── css/style.css                      # estilos
