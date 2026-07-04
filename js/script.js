@@ -281,13 +281,21 @@ function renderPracticeQuestion(){
 }
 
 /* ---------- SIMULADO COMPLETO ---------- */
+const QUESTIONS_PER_TOPIC = 2;
 function shuffle(arr){
   const a = [...arr];
   for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   return a;
 }
+function buildExam(){
+  const picked = Object.keys(TOPICS).flatMap(t=>{
+    const pool = shuffle(QUESTIONS.map((q,i)=>({...q,gid:i})).filter(q=>q.topic===t));
+    return pool.slice(0, QUESTIONS_PER_TOPIC);
+  });
+  return shuffle(picked);
+}
 document.getElementById('start-exam').addEventListener('click', ()=>{
-  examState = { order: shuffle(QUESTIONS.map((q,i)=>({...q,gid:i}))), idx:0, answers:{} };
+  examState = { order: buildExam(), idx:0, answers:{} };
   document.getElementById('exam-intro').style.display='none';
   document.getElementById('exam-quiz-area').style.display='block';
   document.getElementById('exam-result').style.display='none';
@@ -355,10 +363,10 @@ function finishExam(){
     if(p < weakestPct){ weakestPct = p; weakestTopic = t; }
   });
 
-  // Qualquer tema em que o acerto tenha sido 3 ou menos é considerado "com dificuldade"
+  // Qualquer tema com menos de 60% de acerto é considerado "com dificuldade"
   const weakTopics = Object.keys(byTopic)
-    .filter(t => byTopic[t].c <= 3)
-    .sort((a,b)=> byTopic[a].c - byTopic[b].c);
+    .filter(t => (byTopic[t].c/byTopic[t].t) < 0.6)
+    .sort((a,b)=> (byTopic[a].c/byTopic[a].t) - (byTopic[b].c/byTopic[b].t));
 
   const stats = loadStats();
   stats.attempts = (stats.attempts||0)+1;
@@ -417,7 +425,7 @@ function finishExam(){
       <div class="msg">${pct>=60 ? 'Nota suficiente para passar dos 6 pontos exigidos 🎉' : 'Ainda abaixo dos 6 pontos &mdash; foque nos temas com dificuldade abaixo'}</div>
     </div>
 
-    ${weakTopics.length ? `<div class="weak-alert">Temas com dificuldade (3 acertos ou menos): <strong>${weakTopics.map(t=>TOPICS[t].label).join(', ')}</strong>. As videoaulas desses temas já estão logo abaixo.</div>` : `<div class="weak-alert" style="background:var(--green-dim); border-color:#1f5f3d"><strong style="color:var(--green)">Nenhum tema com dificuldade grave desta vez</strong> &mdash; todos os temas tiveram mais de 3 acertos.</div>`}
+    ${weakTopics.length ? `<div class="weak-alert">Temas com dificuldade (menos de 60% de acerto): <strong>${weakTopics.map(t=>TOPICS[t].label).join(', ')}</strong>. As videoaulas desses temas já estão logo abaixo.</div>` : `<div class="weak-alert" style="background:var(--green-dim); border-color:#1f5f3d"><strong style="color:var(--green)">Nenhum tema com dificuldade grave desta vez</strong> &mdash; todos os temas tiveram 60% de acerto ou mais.</div>`}
 
     ${weakTopics.length ? `<h3 style="margin-bottom:10px">Videoaulas para reforçar</h3>${weakVideosHTML}` : ''}
 
