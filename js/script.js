@@ -1,20 +1,20 @@
 /* ---------- DADOS ---------- */
 const TOPICS = {
-  paridade:    { label: "Paridade simples e bidimensional", video: null },
-  hamming:     { label: "Código de Hamming", video: "FGAU2_F_m-0" },
-  crc:         { label: "CRC (Cyclic Redundancy Check)", video: "_NkXZekQsQk" },
-  osi:         { label: "Modelo OSI e TCP/IP", video: "b2lN3RnSRwU" },
-  dispositivos:{ label: "Dispositivos de rede", video: "BmBPhA5b-Lc" },
-  topologias:  { label: "Topologias de rede", video: null },
-  ethernet:    { label: "Ethernet e endereçamento MAC", video: "nZan2yTamJw" },
-  cabeamento:  { label: "Cabeamento (par trançado, coaxial, fibra)", video: null },
-  wireless:    { label: "Redes sem fio (Wi-Fi, Bluetooth)", video: "aCSCl9fOTv4" },
-  ondas:       { label: "Ondas e som (física)", video: "HzN5-2Pn1E0" },
-  midia:       { label: "Áudio, imagem e vídeo (formatos)", video: null },
-  satelite:    { label: "Comunicação via satélite", video: null },
-  fibra:       { label: "Fibra óptica e comunicação óptica", video: null },
-  propagacao:  { label: "Tempo de propagação e RTT", video: null },
-  acesso_meio: { label: "Controle de acesso ao meio e domínios de colisão", video: null }
+  paridade:    { label: "Paridade simples e bidimensional", videos: [] },
+  hamming:     { label: "Código de Hamming", videos: ["FGAU2_F_m-0", "3hY5IYVsNn4"] },
+  crc:         { label: "CRC (Cyclic Redundancy Check)", videos: ["_NkXZekQsQk", "g_ffY5pRdco"] },
+  osi:         { label: "Modelo OSI e TCP/IP", videos: ["b2lN3RnSRwU", "bmgvIlvVAlc"] },
+  dispositivos:{ label: "Dispositivos de rede", videos: ["BmBPhA5b-Lc", "X6nwnKIooWg"] },
+  topologias:  { label: "Topologias de rede", videos: [] },
+  ethernet:    { label: "Ethernet e endereçamento MAC", videos: ["nZan2yTamJw", "4cWEv4fJUxI"] },
+  cabeamento:  { label: "Cabeamento (par trançado, coaxial, fibra)", videos: [] },
+  wireless:    { label: "Redes sem fio (Wi-Fi, Bluetooth)", videos: ["aCSCl9fOTv4", "yDp_ms_Cu2M"] },
+  ondas:       { label: "Ondas e som (física)", videos: ["HzN5-2Pn1E0", "760Gkg7Bt2w"] },
+  midia:       { label: "Áudio, imagem e vídeo (formatos)", videos: [] },
+  satelite:    { label: "Comunicação via satélite", videos: [] },
+  fibra:       { label: "Fibra óptica e comunicação óptica", videos: [] },
+  propagacao:  { label: "Tempo de propagação e RTT", videos: ["vTUucZuKUEs", "kkUfUeE14pI"] },
+  acesso_meio: { label: "Controle de acesso ao meio e domínios de colisão", videos: [] }
 };
 
 const QUESTIONS = [
@@ -176,7 +176,7 @@ function renderHome(){
     const n = QUESTIONS.filter(q=>q.topic===key).length;
     return `<div class="card" data-jump="${key}">
       <h3>${TOPICS[key].label}</h3>
-      <p>${n} questão(ões) de prática ${TOPICS[key].video? '· videoaula disponível':''}</p>
+      <p>${n} questão(ões) de prática ${TOPICS[key].videos.length? '· videoaula disponível':''}</p>
       <span class="badge">praticar &rarr;</span>
     </div>`;
   }).join('');
@@ -194,14 +194,17 @@ function renderHome(){
 /* ---------- VIDEOAULAS ---------- */
 function renderVideos(){
   const box = document.getElementById('videos-container');
-  box.innerHTML = Object.keys(TOPICS).filter(k=>TOPICS[k].video).map(key=>{
+  box.innerHTML = Object.keys(TOPICS).filter(k=>TOPICS[k].videos.length).map(key=>{
     const t = TOPICS[key];
+    const frames = t.videos.map((v,i)=>`
+      <span class="topic-tag">opção ${i+1}</span>
+      <div class="video-frame">
+        <iframe src="https://www.youtube.com/embed/${v}" title="${t.label} - opção ${i+1}" allowfullscreen loading="lazy"></iframe>
+      </div>`).join('');
     return `<div class="video-block">
       <h3>${t.label}</h3>
       <span class="topic-tag">tema: ${key}</span>
-      <div class="video-frame">
-        <iframe src="https://www.youtube.com/embed/${t.video}" title="${t.label}" allowfullscreen loading="lazy"></iframe>
-      </div>
+      ${frames}
     </div>`;
   }).join('') + `<div class="video-block"><p style="color:var(--text-faint); font-size:13px; margin:0">Alguns temas não têm vídeo indicado aqui &mdash; use a aba "Praticar por tema" para essas questões, e se quiser buscar um vídeo específico é só pesquisar o nome do tema no YouTube.</p></div>`;
 }
@@ -392,13 +395,16 @@ function finishExam(){
     const label = TOPICS[t].label;
     const acertos = byTopic[t].c;
     const totalT = byTopic[t].t;
-    if(TOPICS[t].video){
+    if(TOPICS[t].videos.length){
+      const frames = TOPICS[t].videos.map((v,i)=>`
+        <span class="topic-tag">opção ${i+1}</span>
+        <div class="video-frame">
+          <iframe src="https://www.youtube.com/embed/${v}" title="${label} - opção ${i+1}" allowfullscreen loading="lazy"></iframe>
+        </div>`).join('');
       return `<div class="video-block">
         <h3>Reforço: ${label}</h3>
         <span class="topic-tag">você acertou ${acertos} de ${totalT} nesse tema</span>
-        <div class="video-frame">
-          <iframe src="https://www.youtube.com/embed/${TOPICS[t].video}" title="${label}" allowfullscreen loading="lazy"></iframe>
-        </div>
+        ${frames}
       </div>`;
     } else {
       return `<div class="video-block">
